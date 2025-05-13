@@ -1,46 +1,50 @@
 // pinnen
-const int pinRood = 12;
-const int pinOranje = 10;
 const int pinGroen = 8;
-const int pinKnop = 7;
+const int pinKnop  = 7;
 
-// variabelen voor actuatoren
-int waardeKnop = LOW;
-bool voetgangerWacht = false;
+// toestanden
+const int LEDUIT_KNOPLOS = 0;
+const int LEDAAN_KNOPIN  = 1;
+const int LEDAAN_KNOPLOS = 2;
+const int LEDUIT_KNOPIN  = 3;
 
-// variabelen voor toestanden
-const int LEDUIT_KNOPLOS = 1;
-const int LEDAAN_KNOPIN = 2;
-const int LEDAAN_KNOPLOS = 3;
-const int LEDUIT_KNOPIN = 4;
-int toestand = LEDUIT_KNOPLOS;
+int toestand;
+int vorigeKnop;
+int huidigeKnop;
 
+void setup() {
+  pinMode(pinGroen, OUTPUT);
+  pinMode(pinKnop, INPUT);         // externe pull-down op pinKnop
+  vorigeKnop = digitalRead(pinKnop);
+  toestand   = LEDUIT_KNOPLOS;
+  digitalWrite(pinGroen, LOW);
+}
 
+void loop() {
+  huidigeKnop = digitalRead(pinKnop);
 
-void setup() { // wordt 1x uitgevoerd
-
-// init serial monitor
-Serial.begin(9600)
-Serial.println(“start”)
-
-// pinmodes
-pinMode(pinRood  , OUTPUT);
-pinMode(pinOranje, OUTPUT);
-pinMode(pinGroen , OUTPUT); 
-pinMode(pinKnop  , INPUT); 
-
+  // detecteer alleen rising edge: LOW → HIGH
+  if (vorigeKnop == LOW && huidigeKnop == HIGH) {
+    switch (toestand) {
+      case LEDUIT_KNOPLOS:
+        toestand = LEDAAN_KNOPIN;
+        digitalWrite(pinGroen, HIGH);
+        break;
+      case LEDAAN_KNOPIN:
+        toestand = LEDAAN_KNOPLOS;
+        // LED blijft aan
+        break;
+      case LEDAAN_KNOPLOS:
+        toestand = LEDUIT_KNOPIN;
+        digitalWrite(pinGroen, LOW);
+        break;
+      case LEDUIT_KNOPIN:
+        toestand = LEDUIT_KNOPLOS;
+        // LED blijft uit
+        break;
+    }
   }
-  
-  void loop() { // wordt oneindig herhaald
-    // sensoren lezen
-    if (toestand == LEDUIT_KNOPLOS) {
-        if (millis() - toestandStartTijd > 5000) {
-          toestandStartTijd = millis();
-          toestand = LEDAAN_KNOPIN;
-         }
-      }
-      if (toestand == ORANJE) {
-        if (millis() - toestandStartTijd > 1000)
-  }
 
-  }
+  vorigeKnop = huidigeKnop;
+  delay(10);  // korte debounce
+}
